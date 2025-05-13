@@ -2,6 +2,8 @@ package br.com.senai.api.reciclaville.model.entity;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Entity
 @Table(name = "itens_declaracao")
-public class ItensDeclaracao {
+public class ItemDeclaracao {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,12 +22,19 @@ public class ItensDeclaracao {
     @ManyToOne
     @JoinColumn(name = "fk_declaracao_id", nullable = false)
     private Declaracao declaracao;
+    @ManyToOne
+    @JoinColumn(name = "fk_material_id", nullable = false)
+    Material material;
+    @NotNull
+    @Positive
     @Column(nullable = false)
-    private String material;
+    private Double toneladasDeclaradas;
+    @NotNull
+    @Positive
     @Column(nullable = false)
-    private double percentualCompensacaoMaterial;
+    private Double toneladasCompensacao;
+    @NotNull
+    @Positive
     @Column(nullable = false)
-    private double toneladasDeclaradas;
-    @Column(nullable = false)
-    private double toneladasCompensadas;
+    private Double percentualCompensacao;
 }
