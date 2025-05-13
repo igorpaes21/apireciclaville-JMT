@@ -19,12 +19,11 @@ import java.util.stream.Collectors;
 public class ClienteController {
 
     @Autowired
-    ClienteService clienteService;
+     ClienteService clienteService;
 
     @Autowired
     ModelMapper modelMapper;
 
-    //Método para listar todos os Clientes
     @GetMapping
     public ResponseEntity<List<ResponseClienteDTO>> list() {
         List<ResponseClienteDTO> clientes = this.clienteService.findAllClientes().stream()
@@ -32,7 +31,6 @@ public class ClienteController {
         return clientes.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(clientes);
     }
 
-    //Método para buscar um Cliente pelo Id
     @GetMapping("/{id}")
     public ResponseEntity<ResponseClienteDTO> findById(@PathVariable Long id) {
         Cliente cliente = clienteService.findClienteById(id);
@@ -40,7 +38,6 @@ public class ClienteController {
         return ResponseEntity.ok(clienteDTO);
     }
 
-    //Método para criar um Cliente
     @PostMapping
     public ResponseEntity<ResponseClienteDTO> create(@RequestBody @Valid RequestClienteDTO clienteDTO) throws Exception {
         Cliente cliente = modelMapper.map(clienteDTO, Cliente.class);
@@ -50,7 +47,6 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdClienteDTO);
     }
 
-    //Método para atualizar um Cliente
     @PutMapping("/{id}")
     public ResponseEntity<ResponseClienteDTO> update(@PathVariable Long id, @RequestBody RequestClienteDTO clienteDTO) throws Exception {
         Cliente cliente = modelMapper.map(clienteDTO, Cliente.class);
@@ -59,7 +55,6 @@ public class ClienteController {
         return ResponseEntity.ok(clienteUpdateDTO);
     }
 
-    //Método para deletar um Cliente
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         this.clienteService.delete(id);

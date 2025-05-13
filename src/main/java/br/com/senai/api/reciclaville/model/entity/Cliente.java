@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Collection;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,4 +26,16 @@ public class Cliente {
     private String atividadeEconomica;
     @Column(nullable = false)
     private String responsavel;
+
+//    public Collection<Object> getRoles() {
+//        return null;
+//    }
+//
+//    public String getPassword() {
+//        return null;
+//    }
+//
+//    public String getUsername() {
+//        return null;
+//    }
 }
