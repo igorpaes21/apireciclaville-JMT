@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -23,14 +24,14 @@ public class Declaracao {
     @Column(nullable = false)
     private LocalDate dataDeclaracao;
     @Column(nullable = false)
-    private LocalDate dataInicial;
+    private LocalDate dataInicialPeriodo;
     @Column(nullable = false)
-    private LocalDate dataFinal;
+    private LocalDate dataFinalPeriodo;
     @Column(nullable = false)
-    private double totalCompensado;
-
-
-
-
+    private Double totalMateriais;
+    @Column(nullable = false)
+    private Double totalCompensado;
+    @OneToMany(mappedBy = "declaracao", cascade = CascadeType.ALL)
+    private List<ItemDeclaracao> itens;
 
 }
