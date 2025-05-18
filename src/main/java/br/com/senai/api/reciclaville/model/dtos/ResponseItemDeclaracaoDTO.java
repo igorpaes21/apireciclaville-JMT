@@ -6,10 +6,14 @@ import lombok.Data;
 public class ResponseItemDeclaracaoDTO {
 
     private Long id;
+
     private Long materialId;
+
     private String materialNome;
+
     private Double toneladasDeclaradas;
-    private Double toneladasCompensacao;
+
     private Double percentualCompensacao;
 
+    private Double toneladasCompensacao;
 }
