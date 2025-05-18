@@ -39,9 +39,9 @@ public class ClienteController {
     }
 
     @PostMapping
-    public ResponseEntity<ResponseClienteDTO> create(@RequestBody @Valid RequestClienteDTO clienteDTO) throws Exception {
-        Cliente cliente = modelMapper.map(clienteDTO, Cliente.class);
-        Cliente createdCliente = clienteService.create(cliente);
+    public ResponseEntity<ResponseClienteDTO> create(@RequestBody @Valid RequestClienteDTO requestClienteDTO) throws Exception {
+        Cliente cliente = modelMapper.map(requestClienteDTO, Cliente.class);
+        Cliente createdCliente = clienteService.create(requestClienteDTO);
         ResponseClienteDTO createdClienteDTO = modelMapper.map(createdCliente, ResponseClienteDTO.class);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(createdClienteDTO);
@@ -58,7 +58,7 @@ public class ClienteController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         this.clienteService.delete(id);
-        return ResponseEntity.ok("Cliente deletado com sucesso");
+        return ResponseEntity.ok("Cliente com Id: " + id + " deletado com sucesso");
 
     }
 }
