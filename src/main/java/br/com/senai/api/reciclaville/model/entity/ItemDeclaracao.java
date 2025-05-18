@@ -1,40 +1,51 @@
 package br.com.senai.api.reciclaville.model.entity;
 
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
+import java.math.BigDecimal;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "itens_declaracao")
+@Data
 public class ItemDeclaracao {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "fk_declaracao_id", nullable = false)
-    private Declaracao declaracao;
+    @JoinColumn(name = "material_id", nullable = false)
+    @NotNull(message = "O material é obrigatório.")
+    private Material material;
+
     @ManyToOne
-    @JoinColumn(name = "fk_material_id", nullable = false)
-    Material material;
-    @NotNull
-    @Positive
+    @JoinColumn(name = "declaracao_id", nullable = false)
+    private Declaracao declaracao;
+
+    @NotNull(message = "As toneladas declaradas são obrigatórias.")
     @Column(nullable = false)
-    private Double toneladasDeclaradas;
-    @NotNull
-    @Positive
+    private BigDecimal toneladasDeclaradas;
+
     @Column(nullable = false)
-    private Double toneladasCompensacao;
-    @NotNull
-    @Positive
+    private BigDecimal percentualCompensacao;
+
     @Column(nullable = false)
-    private Double percentualCompensacao;
+    private BigDecimal toneladasCompensacao;
+
+    @PrePersist
+    @PreUpdate
+    public void calcularCompensacao() {
+        if (toneladasDeclaradas != null && percentualCompensacao != null) {
+            toneladasCompensacao = toneladasDeclaradas
+                    .multiply(percentualCompensacao)
+                    .divide(BigDecimal.valueOf(100));
+        }
+    }
+
+
 }
