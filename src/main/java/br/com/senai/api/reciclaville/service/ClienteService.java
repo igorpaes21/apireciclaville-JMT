@@ -1,5 +1,6 @@
 package br.com.senai.api.reciclaville.service;
 
+import br.com.senai.api.reciclaville.model.dtos.RequestClienteDTO;
 import br.com.senai.api.reciclaville.model.entity.Cliente;
 import br.com.senai.api.reciclaville.model.exceptions.ResourceNotFoundException;
 import br.com.senai.api.reciclaville.repository.ClienteRepository;
@@ -23,7 +24,15 @@ public class ClienteService {
                 () -> new ResourceNotFoundException("Cliente com Id: " + id + " não encontrado"));
     }
 
-    public Cliente create(Cliente cliente) {
+    public Cliente create(RequestClienteDTO requestClienteDTO) {
+        if (clienteRepository.existsByCnpj(requestClienteDTO.getCnpj())){
+            throw new IllegalArgumentException("CNPJ já cadastrado: " + requestClienteDTO.getCnpj());
+        }
+        Cliente cliente = new Cliente();
+        cliente.setNome(requestClienteDTO.getNome());
+        cliente.setCnpj(requestClienteDTO.getCnpj());
+        cliente.setAtividadeEconomica(requestClienteDTO.getAtividadeEconomica());
+        cliente.setResponsavel(requestClienteDTO.getResponsavel());
         return clienteRepository.save(cliente);
     }
 
