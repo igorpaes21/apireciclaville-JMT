@@ -1,8 +1,6 @@
 package br.com.senai.api.reciclaville.controller;
 
-import br.com.senai.api.reciclaville.model.dtos.RequestClienteDTO;
-import br.com.senai.api.reciclaville.model.dtos.RequestMaterialDTO;
-import br.com.senai.api.reciclaville.model.dtos.ResponseMaterialDTO;
+import br.com.senai.api.reciclaville.model.dtos.*;
 import br.com.senai.api.reciclaville.model.dtos.ResponseMaterialDTO;
 import br.com.senai.api.reciclaville.model.entity.Material;
 import br.com.senai.api.reciclaville.model.entity.Material;
@@ -44,15 +42,15 @@ public class MaterialController {
     @PostMapping
     public ResponseEntity<ResponseMaterialDTO> create(@Valid @RequestBody RequestMaterialDTO materialDTO) throws Exception {
         Material material = modelMapper.map(materialDTO, Material.class);
-        Material createdMaterial = materialService.create(material);
+        Material createdMaterial = this.materialService.create(material);
         ResponseMaterialDTO createdMaterialDTO = modelMapper.map(createdMaterial, ResponseMaterialDTO.class);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(createdMaterialDTO);
     }
 
-    public ResponseEntity<ResponseMaterialDTO> update(@PathVariable Long id, @RequestBody RequestMaterialDTO materialDTO) throws Exception {
-        Material material = modelMapper.map(materialDTO, Material.class);
-        Material materialUpdate = this.materialService.update(id, material);
+    @PutMapping("/{id}")
+    public ResponseEntity<ResponseMaterialDTO> update(@PathVariable Long id, @RequestBody UpdateMaterialDTO materialDTO) throws Exception {
+        Material materialUpdate = this.materialService.update(id, materialDTO);
         ResponseMaterialDTO materialUpdateDTO = modelMapper.map(materialUpdate, ResponseMaterialDTO.class);
         return ResponseEntity.ok(materialUpdateDTO);
     }
@@ -60,7 +58,7 @@ public class MaterialController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         this.materialService.delete(id);
-        return ResponseEntity.ok("Material deletado com sucesso");
+        return ResponseEntity.ok("Material com Id: " + id + " deletado com sucesso");
 
     }
 }
