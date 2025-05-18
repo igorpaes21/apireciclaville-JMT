@@ -1,5 +1,6 @@
 package br.com.senai.api.reciclaville.service;
 
+import br.com.senai.api.reciclaville.model.dtos.RequestDeclaracaoDTO;
 import br.com.senai.api.reciclaville.model.entity.Cliente;
 import br.com.senai.api.reciclaville.model.entity.Declaracao;
 import br.com.senai.api.reciclaville.model.entity.ItemDeclaracao;
@@ -10,12 +11,14 @@ import br.com.senai.api.reciclaville.repository.MaterialRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class DeclaracaoService {
+
 
     @Autowired
     DeclaracaoRepository declaracaoRepository;
@@ -26,72 +29,93 @@ public class DeclaracaoService {
     @Autowired
     MaterialRepository materialRepository;
 
-    public List<Declaracao> findAllDeclaracoes() {
+    public List<Declaracao> findAll() {
         return declaracaoRepository.findAll();
     }
 
-    public Declaracao findDeclaracaoById(Long id) {
+    public Declaracao findById(Long id) {
         return declaracaoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Declaração não encontrada"));
+                .orElseThrow(() -> new IllegalArgumentException("Declaração não encontrada."));
     }
 
-    public Declaracao create(Declaracao declaracaoDTO){
-        Cliente cliente = clienteRepository.findById(declaracaoDTO.getCliente().getId())
-                .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
+    public Declaracao create(RequestDeclaracaoDTO request) {
+        Cliente cliente = clienteRepository.findById(request.getClienteId())
+                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado."));
+
+        if (request.getDataInicialPeriodo().isAfter(request.getDataFinalPeriodo())) {
+            throw new IllegalArgumentException("A data inicial do período deve ser menor que a data final.");
+        }
 
         Declaracao declaracao = new Declaracao();
         declaracao.setCliente(cliente);
         declaracao.setDataDeclaracao(LocalDate.now());
-        declaracao.setDataInicialPeriodo(declaracaoDTO.getDataInicialPeriodo());
-        declaracao.setDataFinalPeriodo(declaracaoDTO.getDataFinalPeriodo());
+        declaracao.setDataInicialPeriodo(request.getDataInicialPeriodo());
+        declaracao.setDataFinalPeriodo(request.getDataFinalPeriodo());
 
-        List<ItemDeclaracao> itens = declaracaoDTO.getItens().stream().map(itemDTO -> {
-            Material material = materialRepository.findById(itemDTO.getMaterial().getId())
-                    .orElseThrow(() -> new RuntimeException("Material não encontrado"));
+        List<ItemDeclaracao> itens = request.getItens().stream().map(itemDTO -> {
+            Material material = materialRepository.findById(itemDTO.getMaterialId())
+                    .orElseThrow(() -> new IllegalArgumentException("Material não encontrado."));
 
-            ItemDeclaracao itemDeclaracao = new ItemDeclaracao();
-            itemDeclaracao.setMaterial(material);
-            itemDeclaracao.setToneladasDeclaradas(itemDTO.getToneladasDeclaradas());
-            itemDeclaracao.setPercentualCompensacao(material.getPercentagemCompensacao());
-            itemDeclaracao.setToneladasCompensacao(itemDeclaracao.getToneladasDeclaradas() * material.getPercentagemCompensacao() / 100);
-            itemDeclaracao.setDeclaracao(declaracao);
-            return itemDeclaracao;
+            if (itemDTO.getToneladasDeclaradas().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("As toneladas declaradas devem ser maiores que zero.");
+            }
+
+            ItemDeclaracao item = new ItemDeclaracao();
+            item.setMaterial(material);
+            item.setToneladasDeclaradas(itemDTO.getToneladasDeclaradas());
+            item.setPercentualCompensacao(material.getPercentagemCompensacao());
+            item.setToneladasCompensacao(itemDTO.getToneladasDeclaradas().multiply(material.getPercentagemCompensacao()).divide(BigDecimal.valueOf(100))
+            );
+            item.setDeclaracao(declaracao);
+            return item;
         }).collect(Collectors.toList());
 
         declaracao.setItens(itens);
-        declaracao.setTotalMateriais(itens.stream().mapToDouble(ItemDeclaracao::getToneladasDeclaradas).sum());
-        declaracao.setTotalCompensado(itens.stream().mapToDouble(ItemDeclaracao::getToneladasCompensacao).sum());
+
+        BigDecimal totalMateriais = itens.stream()
+                .map(ItemDeclaracao::getToneladasDeclaradas)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalCompensado = itens.stream()
+                .map(ItemDeclaracao::getToneladasCompensacao)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        declaracao.setTotalMateriais(totalMateriais);
+        declaracao.setTotalCompensado(totalCompensado);
 
         return declaracaoRepository.save(declaracao);
     }
 
-    public Declaracao update(Long id, Declaracao declaracaoDTO) {
-        Declaracao existingDeclaracao = findDeclaracaoById(id);
-        existingDeclaracao.setDataInicialPeriodo(declaracaoDTO.getDataInicialPeriodo());
-        existingDeclaracao.setDataFinalPeriodo(declaracaoDTO.getDataFinalPeriodo());
+    public Declaracao calcularTotais(Declaracao declaracao) {
+        List<ItemDeclaracao> itens = declaracao.getItens();
+        BigDecimal totalMateriais = BigDecimal.ZERO;
+        BigDecimal totalCompensado = BigDecimal.ZERO;
 
-        List<ItemDeclaracao> itens = declaracaoDTO.getItens().stream().map(itemDTO -> {
-            Material material = materialRepository.findById(itemDTO.getMaterial().getId())
-                    .orElseThrow(() -> new RuntimeException("Material não encontrado"));
+        if (itens != null && !itens.isEmpty()) {
+            for (ItemDeclaracao item : itens) {
+                totalMateriais = totalMateriais.add(item.getToneladasDeclaradas()); // Supondo que getQuantidade() retorna a quantidade de material
+                totalCompensado = totalCompensado.add(item.getToneladasCompensacao()); // Supondo que getValorCompensado() retorna o valor compensado
+            }
+        }
 
-            ItemDeclaracao itemDeclaracao = new ItemDeclaracao();
-            itemDeclaracao.setMaterial(material);
-            itemDeclaracao.setToneladasDeclaradas(itemDTO.getToneladasDeclaradas());
-            itemDeclaracao.setPercentualCompensacao(material.getPercentagemCompensacao());
-            itemDeclaracao.setToneladasCompensacao(itemDeclaracao.getToneladasDeclaradas() * material.getPercentagemCompensacao() / 100);
-            itemDeclaracao.setDeclaracao(existingDeclaracao);
-            return itemDeclaracao;
-        }).collect(Collectors.toList());
+        declaracao.setTotalMateriais(totalMateriais);
+        declaracao.setTotalCompensado(totalCompensado);
 
-        existingDeclaracao.setItens(itens);
-        existingDeclaracao.setTotalMateriais(itens.stream().mapToDouble(ItemDeclaracao::getToneladasDeclaradas).sum());
-        existingDeclaracao.setTotalCompensado(itens.stream().mapToDouble(ItemDeclaracao::getToneladasCompensacao).sum());
+        return declaracao;
+    }
 
+    public Declaracao update(Long id, Declaracao declaracao) {
+        Declaracao existingDeclaracao = findById(id);
+        existingDeclaracao.setCliente(declaracao.getCliente());
+        existingDeclaracao.setDataDeclaracao(declaracao.getDataDeclaracao());
+        existingDeclaracao.setDataInicialPeriodo(declaracao.getDataInicialPeriodo());
+        existingDeclaracao.setDataFinalPeriodo(declaracao.getDataFinalPeriodo());
+        existingDeclaracao.setItens(declaracao.getItens());
         return declaracaoRepository.save(existingDeclaracao);
     }
 
     public void delete(Long id) {
-        Declaracao declaracao = findDeclaracaoById(id);
-        declaracaoRepository.deleteById(id);
+        Declaracao declaracao = findById(id);
+        declaracaoRepository.delete(declaracao);
     }
 }

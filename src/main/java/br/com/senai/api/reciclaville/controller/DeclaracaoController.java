@@ -2,8 +2,12 @@ package br.com.senai.api.reciclaville.controller;
 
 import br.com.senai.api.reciclaville.model.dtos.RequestDeclaracaoDTO;
 import br.com.senai.api.reciclaville.model.dtos.ResponseDeclaracaoDTO;
+import br.com.senai.api.reciclaville.model.entity.*;
 import br.com.senai.api.reciclaville.model.entity.Declaracao;
-import br.com.senai.api.reciclaville.model.entity.Declaracao;
+import br.com.senai.api.reciclaville.model.exceptions.ResourceNotFoundException;
+import br.com.senai.api.reciclaville.repository.ClienteRepository;
+import br.com.senai.api.reciclaville.repository.DeclaracaoRepository;
+import br.com.senai.api.reciclaville.repository.MaterialRepository;
 import br.com.senai.api.reciclaville.service.DeclaracaoService;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
@@ -13,56 +17,64 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("declaracoes")
+@RequestMapping("/declaracoes")
 public class DeclaracaoController {
 
     @Autowired
     DeclaracaoService declaracaoService;
 
+    @Autowired
+    ClienteRepository clienteRepository;
 
     @Autowired
-    ModelMapper modelMapper;
+    MaterialRepository materialRepository;
+
+    @Autowired
+    DeclaracaoRepository declaracaoRepository;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     @GetMapping
-    public ResponseEntity<List<ResponseDeclaracaoDTO>> list() {
-        List<ResponseDeclaracaoDTO> declaracoes = this.declaracaoService.findAllDeclaracoes().stream()
-                .map(declaracao -> modelMapper.map(declaracao, ResponseDeclaracaoDTO.class)).collect(Collectors.toList());
+    public ResponseEntity<List<ResponseDeclaracaoDTO>> listAll() {
+        List<ResponseDeclaracaoDTO> declaracoes = declaracaoService.findAll().stream()
+                .map(declaracao -> modelMapper.map(declaracao, ResponseDeclaracaoDTO.class))
+                .collect(Collectors.toList());
         return declaracoes.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(declaracoes);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResponseDeclaracaoDTO> findById(@PathVariable Long id) {
-        Declaracao declaracao = declaracaoService.findDeclaracaoById(id);
-        ResponseDeclaracaoDTO declaracaoDTO = modelMapper.map(declaracao, ResponseDeclaracaoDTO.class);
-        return ResponseEntity.ok(declaracaoDTO);
+    public ResponseEntity<ResponseDeclaracaoDTO> findDeclaracaoById(@PathVariable Long id) {
+        Declaracao declaracao = declaracaoService.findById(id);
+        ResponseDeclaracaoDTO response = modelMapper.map(declaracao, ResponseDeclaracaoDTO.class);
+        return ResponseEntity.ok(response);
     }
 
-
-
     @PostMapping
-    public ResponseEntity<ResponseDeclaracaoDTO> create(@RequestBody @Valid RequestDeclaracaoDTO declaracaoDTO) throws Exception {
-        Declaracao declaracao = modelMapper.map(declaracaoDTO, Declaracao.class);
-        Declaracao createdDeclaracao  = declaracaoService.create(declaracao);
-        ResponseDeclaracaoDTO createdDeclaracaoDTO = modelMapper.map(createdDeclaracao, ResponseDeclaracaoDTO.class);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdDeclaracaoDTO);
+    public ResponseEntity<ResponseDeclaracaoDTO> create(@RequestBody RequestDeclaracaoDTO declaracaoDTO) {
+        Declaracao createdDeclaracao = declaracaoService.create(declaracaoDTO);
+        ResponseDeclaracaoDTO response = modelMapper.map(createdDeclaracao, ResponseDeclaracaoDTO.class);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ResponseDeclaracaoDTO> update(@PathVariable Long id, @RequestBody RequestDeclaracaoDTO declaracaoDTO) throws Exception {
-        Declaracao declaracao = modelMapper.map(declaracaoDTO, Declaracao.class);
-        Declaracao declaracaoUpdate = this.declaracaoService.update(id, declaracao);
-        ResponseDeclaracaoDTO declaracaoUpdateDTO = modelMapper.map(declaracaoUpdate, ResponseDeclaracaoDTO.class);
-        return ResponseEntity.ok(declaracaoUpdateDTO);
+    public ResponseEntity<ResponseDeclaracaoDTO> update(@PathVariable Long id, @RequestBody @Valid RequestDeclaracaoDTO requestDeclaracaoDTO) {
+        Declaracao declaracao = modelMapper.map(requestDeclaracaoDTO, Declaracao.class);
+        Declaracao updatedDeclaracao = declaracaoService.update(id, declaracao);
+        ResponseDeclaracaoDTO response = modelMapper.map(updatedDeclaracao, ResponseDeclaracaoDTO.class);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
-        this.declaracaoService.delete(id);
-        return ResponseEntity.ok("Cliente deletado com sucesso");
+        declaracaoService.delete(id);
+        return ResponseEntity.ok("Declaração com ID " + id + " deletada com sucesso.");
     }
 }
+
