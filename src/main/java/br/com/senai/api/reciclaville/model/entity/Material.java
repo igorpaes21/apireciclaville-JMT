@@ -2,9 +2,9 @@ package br.com.senai.api.reciclaville.model.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
@@ -16,9 +16,12 @@ public class Material {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotNull(message = "O nome do material é obrigatório.")
     @Column(nullable = false)
     private String nomeMaterial;
 
     @NotNull(message = "A percentagem de compensação é obrigatória.")
-    private Double percentagemCompensacao;
+    private BigDecimal percentagemCompensacao;
+
 }
