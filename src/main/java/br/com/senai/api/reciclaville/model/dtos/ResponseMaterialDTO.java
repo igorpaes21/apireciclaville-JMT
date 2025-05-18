@@ -7,5 +7,5 @@ public class ResponseMaterialDTO {
 
     private Long id;
     private String nome;
-    private Double percentualCompensacao;
+    private Double percentagemCompensacao;
 }
